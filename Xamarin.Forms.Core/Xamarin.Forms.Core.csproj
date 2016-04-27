@@ -93,6 +93,7 @@
     <Compile Include="ElementTemplate.cs" />
     <Compile Include="EmailKeyboard.cs" />
     <Compile Include="IEntryController.cs" />
+    <Compile Include="INavigationPageController.cs" />
     <Compile Include="Internals\EvalRequested.cs" />
     <Compile Include="ExportEffectAttribute.cs" />
     <Compile Include="ExpressionSearch.cs" />
@@ -167,7 +168,7 @@
     <Compile Include="ModalPushingEventArgs.cs" />
     <Compile Include="NavigationEventArgs.cs" />
     <Compile Include="NavigationModel.cs" />
-    <Compile Include="NavigationRequestedEventArgs.cs" />
+    <Compile Include="Internals\NavigationRequestedEventArgs.cs" />
     <Compile Include="NotifyCollectionChangedEventArgsEx.cs" />
     <Compile Include="NotifyCollectionChangedEventArgsExtensions.cs" />
     <Compile Include="NullEffect.cs" />
