@@ -45,6 +45,8 @@ namespace Xamarin.Forms.Platform.iOS
 	{
 		bool _isDisposed;
 
+		IElementController ElementController => Element as IElementController;
+
 		protected override void Dispose(bool disposing)
 		{
 			if (_isDisposed)
@@ -118,7 +120,7 @@ namespace Xamarin.Forms.Platform.iOS
 			}
 
 			IImageSourceHandler handler;
-			((IElementController)Element).SetValueFromRenderer(Image.IsLoadingPropertyKey, true);
+			ElementController.SetValueFromRenderer(Image.IsLoadingPropertyKey, true);
 
 			if (source != null && (handler = Registrar.Registered.GetHandler<IImageSourceHandler>(source.GetType())) != null)
 			{
@@ -143,7 +145,7 @@ namespace Xamarin.Forms.Platform.iOS
 				Control.Image = null;
 
 			if (!_isDisposed)
-				((IElementController)Element).SetValueFromRenderer(Image.IsLoadingPropertyKey, false);
+				ElementController.SetValueFromRenderer(Image.IsLoadingPropertyKey, false);
 		}
 
 		void SetOpacity()
