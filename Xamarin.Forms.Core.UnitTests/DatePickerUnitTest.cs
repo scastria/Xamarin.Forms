@@ -140,8 +140,8 @@ namespace Xamarin.Forms.Core.UnitTests
 			datePicker.Date = initialDate;
 
 			DatePicker pickerFromSender = null;
-			DateTime oldDate = new DateTime ();
-			DateTime newDate = new DateTime ();
+			DateTime? oldDate = new DateTime ();
+			DateTime? newDate = new DateTime ();
 
 			datePicker.DateSelected += (s, e) => {
 				pickerFromSender = (DatePicker)s;
@@ -161,8 +161,9 @@ namespace Xamarin.Forms.Core.UnitTests
 		public void SetNullValueDoesNotThrow ()
 		{
 			var datePicker = new DatePicker ();
+			Assert.AreEqual(DatePicker.DateProperty.DefaultValue, datePicker.Date);
 			Assert.DoesNotThrow (() => datePicker.SetValue (DatePicker.DateProperty, null));
-			Assert.AreEqual (DatePicker.DateProperty.DefaultValue, datePicker.Date);
+			Assert.IsNull (datePicker.Date);
 		}
 
 		[Test]

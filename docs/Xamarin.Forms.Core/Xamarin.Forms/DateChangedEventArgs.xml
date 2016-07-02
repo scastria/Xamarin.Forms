@@ -31,7 +31,6 @@
         <AssemblyVersion>1.3.0.0</AssemblyVersion>
         <AssemblyVersion>1.4.0.0</AssemblyVersion>
         <AssemblyVersion>1.5.0.0</AssemblyVersion>
-        <AssemblyVersion>2.0.0.0</AssemblyVersion>
       </AssemblyInfo>
       <Parameters>
         <Parameter Name="oldDate" Type="System.DateTime" />
@@ -44,9 +43,27 @@
         <remarks>To be added.</remarks>
       </Docs>
     </Member>
+    <Member MemberName=".ctor">
+      <MemberSignature Language="C#" Value="public DateChangedEventArgs (Nullable&lt;DateTime&gt; oldDate, Nullable&lt;DateTime&gt; newDate);" />
+      <MemberSignature Language="ILAsm" Value=".method public hidebysig specialname rtspecialname instance void .ctor(valuetype System.Nullable`1&lt;valuetype System.DateTime&gt; oldDate, valuetype System.Nullable`1&lt;valuetype System.DateTime&gt; newDate) cil managed" />
+      <MemberType>Constructor</MemberType>
+      <AssemblyInfo>
+        <AssemblyVersion>2.0.0.0</AssemblyVersion>
+      </AssemblyInfo>
+      <Parameters>
+        <Parameter Name="oldDate" Type="System.Nullable&lt;System.DateTime&gt;" />
+        <Parameter Name="newDate" Type="System.Nullable&lt;System.DateTime&gt;" />
+      </Parameters>
+      <Docs>
+        <param name="oldDate">To be added.</param>
+        <param name="newDate">To be added.</param>
+        <summary>Creates a new <see cref="T:Xamarin.Forms.DateChangedEventArgs" /> object that represents a change from <paramref name="oldDate" /> to <paramref name="newDate" />.</summary>
+        <remarks>To be added.</remarks>
+      </Docs>
+    </Member>
     <Member MemberName="NewDate">
-      <MemberSignature Language="C#" Value="public DateTime NewDate { get; }" />
-      <MemberSignature Language="ILAsm" Value=".property instance valuetype System.DateTime NewDate" />
+      <MemberSignature Language="C#" Value="public Nullable&lt;DateTime&gt; NewDate { get; }" />
+      <MemberSignature Language="ILAsm" Value=".property instance valuetype System.Nullable`1&lt;valuetype System.DateTime&gt; NewDate" />
       <MemberType>Property</MemberType>
       <AssemblyInfo>
         <AssemblyVersion>1.0.0.0</AssemblyVersion>
@@ -58,7 +75,7 @@
         <AssemblyVersion>2.0.0.0</AssemblyVersion>
       </AssemblyInfo>
       <ReturnValue>
-        <ReturnType>System.DateTime</ReturnType>
+        <ReturnType>System.Nullable&lt;System.DateTime&gt;</ReturnType>
       </ReturnValue>
       <Docs>
         <summary>The date that the user entered.</summary>
@@ -67,8 +84,8 @@
       </Docs>
     </Member>
     <Member MemberName="OldDate">
-      <MemberSignature Language="C#" Value="public DateTime OldDate { get; }" />
-      <MemberSignature Language="ILAsm" Value=".property instance valuetype System.DateTime OldDate" />
+      <MemberSignature Language="C#" Value="public Nullable&lt;DateTime&gt; OldDate { get; }" />
+      <MemberSignature Language="ILAsm" Value=".property instance valuetype System.Nullable`1&lt;valuetype System.DateTime&gt; OldDate" />
       <MemberType>Property</MemberType>
       <AssemblyInfo>
         <AssemblyVersion>1.0.0.0</AssemblyVersion>
@@ -80,7 +97,7 @@
         <AssemblyVersion>2.0.0.0</AssemblyVersion>
       </AssemblyInfo>
       <ReturnValue>
-        <ReturnType>System.DateTime</ReturnType>
+        <ReturnType>System.Nullable&lt;System.DateTime&gt;</ReturnType>
       </ReturnValue>
       <Docs>
         <summary>The date that was on the element at the time that the user selected it.</summary>

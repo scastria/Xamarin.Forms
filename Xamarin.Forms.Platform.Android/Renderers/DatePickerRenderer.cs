@@ -2,6 +2,7 @@ using System;
 using System.ComponentModel;
 using Android.App;
 using Android.Content.Res;
+using Android.Content;
 using Android.Widget;
 using AView = Android.Views.View;
 using Object = Java.Lang.Object;
@@ -58,6 +59,8 @@ namespace Xamarin.Forms.Platform.Android
 			UpdateMinimumDate();
 			UpdateMaximumDate();
 			UpdateTextColor();
+			UpdateNullPlaceholder();
+			UpdateHasClearButton();
 		}
 
 		protected override void OnElementPropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -70,8 +73,12 @@ namespace Xamarin.Forms.Platform.Android
 				UpdateMinimumDate();
 			else if (e.PropertyName == DatePicker.MaximumDateProperty.PropertyName)
 				UpdateMaximumDate();
-			if (e.PropertyName == DatePicker.TextColorProperty.PropertyName)
+			else if (e.PropertyName == DatePicker.TextColorProperty.PropertyName)
 				UpdateTextColor();
+			else if (e.PropertyName == DatePicker.NullPlaceholderProperty.PropertyName)
+				UpdateNullPlaceholder();
+			else if (e.PropertyName == DatePicker.HasClearButtonProperty.PropertyName)
+				UpdateHasClearButton();
 		}
 
 		internal override void OnFocusChangeRequested(object sender, VisualElement.FocusRequestArgs e)
@@ -92,21 +99,28 @@ namespace Xamarin.Forms.Platform.Android
 
 		void CreateDatePickerDialog(int year, int month, int day)
 		{
-			DatePicker view = Element;
 			_dialog = new DatePickerDialog(Context, (o, e) =>
 			{
-				view.Date = e.Date;
-				((IElementController)view).SetValueFromRenderer(VisualElement.IsFocusedPropertyKey, false);
-				Control.ClearFocus();
-
-				_dialog.CancelEvent -= OnCancelButtonClicked;
-				_dialog = null;
+				AcceptValueFromDialog(e.Date);
 			}, year, month, day);
+			if(Element.HasClearButton)
+				_dialog.SetButton((int)DialogButtonType.Neutral, "Clear", OnClearButtonClicked);
+		}
+
+		void AcceptValueFromDialog(DateTime? date)
+		{
+			DatePicker view = Element;
+			view.Date = date;
+			((IElementController)view).SetValueFromRenderer(VisualElement.IsFocusedPropertyKey, false);
+			Control.ClearFocus();
+
+			_dialog.CancelEvent -= OnCancelButtonClicked;
+			_dialog = null;
 		}
 
 		void DeviceInfoPropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "CurrentOrientation")
+			if (e.PropertyName == nameof(Device.Info.CurrentOrientation))
 			{
 				DatePickerDialog currentDialog = _dialog;
 				if (currentDialog != null && currentDialog.IsShowing)
@@ -123,7 +137,10 @@ namespace Xamarin.Forms.Platform.Android
 			DatePicker view = Element;
 			((IElementController)view).SetValueFromRenderer(VisualElement.IsFocusedPropertyKey, true);
 
-			CreateDatePickerDialog(view.Date.Year, view.Date.Month - 1, view.Date.Day);
+			DateTime initDate = DateTime.Now.Date;
+			if (view.Date != null)
+				initDate = view.Date.Value;
+			CreateDatePickerDialog(initDate.Year, initDate.Month - 1, initDate.Day);
 
 			UpdateMinimumDate();
 			UpdateMaximumDate();
@@ -137,9 +154,17 @@ namespace Xamarin.Forms.Platform.Android
 			Element.Unfocus();
 		}
 
-		void SetDate(DateTime date)
+		void OnClearButtonClicked(object sender, DialogClickEventArgs de)
 		{
-			Control.Text = date.ToString(Element.Format);
+			AcceptValueFromDialog(null);
+		}
+
+		void SetDate(DateTime? date)
+		{
+			if (date == null)
+				Control.Text = null;
+			else
+				Control.Text = date.Value.ToString(Element.Format);
 		}
 
 		void UpdateMaximumDate()
@@ -161,6 +186,16 @@ namespace Xamarin.Forms.Platform.Android
 		void UpdateTextColor()
 		{
 			_textColorSwitcher?.UpdateTextColor(Control, Element.TextColor);
+		}
+
+		void UpdateNullPlaceholder()
+		{
+			Control.Hint = Element.NullPlaceholder;
+		}
+
+		void UpdateHasClearButton()
+		{
+			//Nothing to do since dialog is created fresh each time
 		}
 
 		class TextFieldClickHandler : Object, IOnClickListener

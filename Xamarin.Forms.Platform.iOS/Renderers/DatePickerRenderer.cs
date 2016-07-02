@@ -52,18 +52,8 @@ namespace Xamarin.Forms.Platform.iOS
 				entry.Ended += OnEnded;
 
 				_picker = new UIDatePicker { Mode = UIDatePickerMode.Date, TimeZone = new NSTimeZone("UTC") };
-
 				_picker.ValueChanged += HandleValueChanged;
-
-				var width = UIScreen.MainScreen.Bounds.Width;
-				var toolbar = new UIToolbar(new RectangleF(0, 0, width, 44)) { BarStyle = UIBarStyle.Default, Translucent = true };
-				var spacer = new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace);
-				var doneButton = new UIBarButtonItem(UIBarButtonSystemItem.Done, (o, a) => entry.ResignFirstResponder());
-
-				toolbar.SetItems(new[] { spacer, doneButton }, false);
-
 				entry.InputView = _picker;
-				entry.InputAccessoryView = toolbar;
 
 				_defaultTextColor = entry.TextColor;
 
@@ -76,6 +66,8 @@ namespace Xamarin.Forms.Platform.iOS
 				UpdateMaximumDate();
 				UpdateMinimumDate();
 				UpdateTextColor();
+				UpdateNullPlaceholder();
+				UpdateHasClearButton();
 			}
 		}
 
@@ -91,11 +83,21 @@ namespace Xamarin.Forms.Platform.iOS
 				UpdateMaximumDate();
 			else if (e.PropertyName == DatePicker.TextColorProperty.PropertyName || e.PropertyName == VisualElement.IsEnabledProperty.PropertyName)
 				UpdateTextColor();
+			else if (e.PropertyName == DatePicker.NullPlaceholderProperty.PropertyName)
+				UpdateNullPlaceholder();
+			else if (e.PropertyName == DatePicker.HasClearButtonProperty.PropertyName)
+				UpdateHasClearButton();
 		}
 
 		void HandleValueChanged(object sender, EventArgs e)
 		{
 			ElementController?.SetValueFromRenderer(DatePicker.DateProperty, _picker.Date.ToDateTime().Date);
+		}
+
+		void HandleClearClicked(object sender, EventArgs e)
+		{
+			ElementController?.SetValueFromRenderer(DatePicker.DateProperty, null);
+			Control.ResignFirstResponder();
 		}
 
 		void OnEnded(object sender, EventArgs eventArgs)
@@ -110,10 +112,15 @@ namespace Xamarin.Forms.Platform.iOS
 
 		void UpdateDateFromModel(bool animate)
 		{
-			if (_picker.Date.ToDateTime().Date != Element.Date.Date)
-				_picker.SetDate(Element.Date.ToNSDate(), animate);
+			//Ignore update to picker if model is null
+			if (Element.Date == null) {
+				Control.Text = null;
+				return;
+			}
+			if (_picker.Date.ToDateTime().Date != Element.Date.Value.Date)
+				_picker.SetDate(Element.Date.Value.ToNSDate(), animate);
 
-			Control.Text = Element.Date.ToString(Element.Format);
+			Control.Text = Element.Date.Value.ToString(Element.Format);
 		}
 
 		void UpdateMaximumDate()
@@ -134,6 +141,27 @@ namespace Xamarin.Forms.Platform.iOS
 				Control.TextColor = _defaultTextColor;
 			else
 				Control.TextColor = textColor.ToUIColor();
+		}
+
+		void UpdateNullPlaceholder()
+		{
+			Control.Placeholder = Element.NullPlaceholder;
+		}
+
+		void UpdateHasClearButton()
+		{
+			var width = UIScreen.MainScreen.Bounds.Width;
+			var toolbar = new UIToolbar(new RectangleF(0, 0, width, 44)) { BarStyle = UIBarStyle.Default, Translucent = true };
+			var spacer = new UIBarButtonItem(UIBarButtonSystemItem.FlexibleSpace);
+			var doneButton = new UIBarButtonItem(UIBarButtonSystemItem.Done, (o, a) => Control.ResignFirstResponder());
+
+			if (Element.HasClearButton) {
+				var clearButton = new UIBarButtonItem("Clear", UIBarButtonItemStyle.Done, HandleClearClicked);
+				toolbar.SetItems(new[] { clearButton, spacer, doneButton }, false);
+			} else
+				toolbar.SetItems(new[] { spacer, doneButton }, false);
+
+			Control.InputAccessoryView = toolbar;
 		}
 	}
 }
