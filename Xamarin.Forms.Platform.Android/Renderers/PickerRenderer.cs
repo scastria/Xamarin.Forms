@@ -36,6 +36,11 @@ namespace Xamarin.Forms.Platform.Android
 			base.Dispose(disposing);
 		}
 
+		protected override EditText CreateNativeControl()
+		{
+			return new EditText(Context) { Focusable = false, Clickable = true, Tag = this };
+		}
+
 		protected override void OnElementChanged(ElementChangedEventArgs<Picker> e)
 		{
 			if (e.OldElement != null)
@@ -46,7 +51,7 @@ namespace Xamarin.Forms.Platform.Android
 				((ObservableList<string>)e.NewElement.Items).CollectionChanged += RowsCollectionChanged;
 				if (Control == null)
 				{
-					var textField = new EditText(Context) { Focusable = false, Clickable = true, Tag = this };
+					var textField = CreateNativeControl();
 					textField.SetOnClickListener(PickerListener.Instance);
 					_textColorSwitcher = new TextColorSwitcher(textField.TextColors);
 					SetNativeControl(textField);
@@ -133,7 +138,12 @@ namespace Xamarin.Forms.Platform.Android
 				_dialog = null;
 			});
 
-			(_dialog = builder.Create()).Show();
+			_dialog = builder.Create();
+			_dialog.DismissEvent += (sender, args) =>
+			{
+				ElementController.SetValueFromRenderer(VisualElement.IsFocusedPropertyKey, false);
+			};
+			_dialog.Show();
 		}
 
 		void RowsCollectionChanged(object sender, EventArgs e)

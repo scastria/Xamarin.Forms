@@ -188,17 +188,21 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 
 				if (_detailLayout != null)
 				{
+					RemoveView(_detailLayout);
 					_detailLayout.Dispose();
 					_detailLayout = null;
 				}
 
 				if (_masterLayout != null)
 				{
+					RemoveView(_masterLayout);
 					_masterLayout.Dispose();
 					_masterLayout = null;
 				}
 
 				Device.Info.PropertyChanged -= DeviceInfoPropertyChanged;
+
+				RemoveDrawerListener(this);
 
 				if (Element != null)
 				{
@@ -206,6 +210,7 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 					Element.PropertyChanged -= HandlePropertyChanged;
 					Element.Appearing -= MasterDetailPageAppearing;
 					Element.Disappearing -= MasterDetailPageDisappearing;
+
 					Element.ClearValue(Android.Platform.RendererProperty);
 					Element = null;
 				}
@@ -268,7 +273,7 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 				UpdateMaster();
 			else if (e.PropertyName == "Detail")
 				UpdateDetail();
-			else if (e.PropertyName == "IsGestureEnabled")
+			else if (e.PropertyName == MasterDetailPage.IsGestureEnabledProperty.PropertyName)
 				SetGestureState();
 			else if (e.PropertyName == MasterDetailPage.IsPresentedProperty.PropertyName)
 			{

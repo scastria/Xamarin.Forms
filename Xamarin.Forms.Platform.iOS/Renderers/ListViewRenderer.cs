@@ -3,26 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Drawing;
 using System.Linq;
-using Xamarin.Forms.Internals;
-#if __UNIFIED__
-using UIKit;
 using Foundation;
-#else
-using MonoTouch.UIKit;
-using MonoTouch.Foundation;
-#endif
-#if __UNIFIED__
+using UIKit;
+using Xamarin.Forms.Internals;
 using RectangleF = CoreGraphics.CGRect;
 using SizeF = CoreGraphics.CGSize;
-using PointF = CoreGraphics.CGPoint;
-
-#else
-using nfloat=System.Single;
-using nint=System.Int32;
-using nuint=System.UInt32;
-#endif
 
 namespace Xamarin.Forms.Platform.iOS
 {
@@ -41,6 +27,7 @@ namespace Xamarin.Forms.Platform.iOS
 		FormsUITableViewController _tableViewController;
 		IListViewController Controller => Element;
 		ITemplatedItemsView<Cell> TemplatedItemsView => Element;
+		public override UIViewController ViewController => _tableViewController;
 
 		public override SizeRequest GetDesiredSize(double widthConstraint, double heightConstraint)
 		{
@@ -310,7 +297,7 @@ namespace Xamarin.Forms.Platform.iOS
 
 		void OnGroupedCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
-			var til = (ITemplatedItemsList<Cell>)sender;
+			var til = (TemplatedItemsList<ItemsView<Cell>, Cell>)sender;
 
 			var templatedItems = TemplatedItemsView.TemplatedItems;
 			var groupIndex = templatedItems.IndexOf(til.HeaderContent);
@@ -919,7 +906,7 @@ namespace Xamarin.Forms.Platform.iOS
 			{
 				var templatedItems = TemplatedItemsView.TemplatedItems;
 				if (List.IsGroupingEnabled)
-					templatedItems = (ITemplatedItemsList<Cell>)((IList)templatedItems)[indexPath.Section];
+					templatedItems = (TemplatedItemsList<ItemsView<Cell>, Cell>)((IList)templatedItems)[indexPath.Section];
 
 				var cell = templatedItems[indexPath.Row];
 				return cell;
@@ -927,14 +914,14 @@ namespace Xamarin.Forms.Platform.iOS
 
 			ITemplatedItemsList<Cell> GetSectionList(int section)
 			{
-				return (ITemplatedItemsList<Cell>)((IList)TemplatedItemsView.TemplatedItems) [section];
+				return (ITemplatedItemsList<Cell>)((IList)TemplatedItemsView.TemplatedItems)[section];
 			}
 
 			void OnSectionPropertyChanged(object sender, PropertyChangedEventArgs e)
 			{
 				var currentSelected = _uiTableView.IndexPathForSelectedRow;
 
-				var til = (ITemplatedItemsView<Cell>)sender;
+				var til = (TemplatedItemsList<ItemsView<Cell>, Cell>)sender;
 				var groupIndex = ((IList)TemplatedItemsView.TemplatedItems).IndexOf(til);
 				if (groupIndex == -1)
 				{
@@ -968,9 +955,9 @@ namespace Xamarin.Forms.Platform.iOS
 
 				var templatedList = TemplatedItemsView.TemplatedItems;
 				if (List.IsGroupingEnabled)
-					templatedList = (ITemplatedItemsList<Cell>)((IList)templatedList)[indexPath.Section];
+					templatedList = (TemplatedItemsList<ItemsView<Cell>, Cell>)((IList)templatedList)[indexPath.Section];
 
-				var item = ((ITemplatedItemsView<Cell>)templatedList).ListProxy[indexPath.Row];
+				var item = templatedList.ListProxy[indexPath.Row];
 
 				itemTemplate = selector.SelectTemplate(item, List);
 				int key;
@@ -1089,6 +1076,11 @@ namespace Xamarin.Forms.Platform.iOS
 
 		public override void ViewWillAppear(bool animated)
 		{
+		    if (!_list.IsRefreshing || !_refresh.Refreshing) return;
+
+		    // Restart the refreshing to get the animation to trigger
+		    UpdateIsRefreshing(false);
+		    UpdateIsRefreshing(true);
 		}
 
 		protected override void Dispose(bool disposing)

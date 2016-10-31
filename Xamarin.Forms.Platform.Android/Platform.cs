@@ -413,7 +413,7 @@ namespace Xamarin.Forms.Platform.Android
 			Page.Platform = this;
 			AddChild(Page, layout);
 
-			((Application)Page.RealParent).NavigationProxy.Inner = this;
+			Application.Current.NavigationProxy.Inner = this;
 
 			_toolbarTracker.Target = newRoot;
 
@@ -427,6 +427,10 @@ namespace Xamarin.Forms.Platform.Android
 
 		internal void UpdateActionBar()
 		{
+			if (ActionBar == null) //Fullscreen theme doesn't have action bar
+			{
+				return;
+			}
 			List<Page> relevantAncestors = AncestorPagesOfPage(_navModel.CurrentPage);
 
 			IEnumerable<NavigationPage> navPages = relevantAncestors.OfType<NavigationPage>();
@@ -1020,7 +1024,7 @@ namespace Xamarin.Forms.Platform.Android
 			}
 
 			foreach (IVisualElementRenderer view in _navModel.Roots.Select(GetRenderer))
-				view.UpdateLayout();
+				view?.UpdateLayout();
 		}
 
 		SizeRequest IPlatform.GetNativeSize(VisualElement view, double widthConstraint, double heightConstraint)

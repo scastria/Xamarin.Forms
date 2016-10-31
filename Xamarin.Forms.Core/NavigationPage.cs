@@ -8,7 +8,7 @@ using Xamarin.Forms.Platform;
 namespace Xamarin.Forms
 {
 	[RenderWith(typeof(_NavigationPageRenderer))]
-	public class NavigationPage : Page, IPageContainer<Page>, INavigationPageController
+	public class NavigationPage : Page, IPageContainer<Page>, INavigationPageController, IElementConfiguration<NavigationPage> 
 	{
 		public static readonly BindableProperty BackButtonTitleProperty = BindableProperty.CreateAttached("BackButtonTitle", typeof(string), typeof(Page), null);
 
@@ -27,9 +27,11 @@ namespace Xamarin.Forms
 
 		static readonly BindablePropertyKey CurrentPagePropertyKey = BindableProperty.CreateReadOnly("CurrentPage", typeof(Page), typeof(NavigationPage), null);
 		public static readonly BindableProperty CurrentPageProperty = CurrentPagePropertyKey.BindableProperty;
-
+		
 		public NavigationPage()
 		{
+			_platformConfigurationRegistry = new Lazy<PlatformConfigurationRegistry<NavigationPage>>(() => new PlatformConfigurationRegistry<NavigationPage>(this));
+
 			Navigation = new NavigationImpl(this);
 		}
 
@@ -319,7 +321,9 @@ namespace Xamarin.Forms
 
 			var root = (Page)PageController.InternalChildren.First();
 
-			PageController.InternalChildren.ToArray().Where(c => c != root).ForEach(c => PageController.InternalChildren.Remove(c));
+			var childrenToRemove = PageController.InternalChildren.ToArray().Where(c => c != root);
+			foreach (var child in childrenToRemove)
+				PageController.InternalChildren.Remove(child);
 
 			CurrentPage = root;
 
@@ -335,7 +339,7 @@ namespace Xamarin.Forms
 			}
 
 			if (PoppedToRoot != null)
-				PoppedToRoot(this, new NavigationEventArgs(root));
+				PoppedToRoot(this, new PoppedToRootEventArgs(root, childrenToRemove.OfType<Page>().ToList()));
 		}
 
 		async Task PushAsyncInner(Page page, bool animated)
@@ -438,6 +442,13 @@ namespace Xamarin.Forms
 			{
 				Owner.RemovePage(page);
 			}
+		}
+
+		readonly Lazy<PlatformConfigurationRegistry<NavigationPage>> _platformConfigurationRegistry;
+
+		public new IPlatformElementConfiguration<T, NavigationPage> On<T>() where T : IConfigPlatform
+		{
+			return _platformConfigurationRegistry.Value.On<T>();
 		}
 	}
 }

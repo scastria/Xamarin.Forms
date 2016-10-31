@@ -11,6 +11,7 @@ using Android.Support.Design.Widget;
 using Android.Support.V4.App;
 using Android.Support.V4.View;
 using Android.Views;
+using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
 
 namespace Xamarin.Forms.Platform.Android.AppCompat
 {
@@ -182,6 +183,8 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 				((IPageController)tabbedPage).InternalChildren.CollectionChanged += OnChildrenCollectionChanged;
 				UpdateBarBackgroundColor();
 				UpdateBarTextColor();
+				UpdateSwipePaging();
+				UpdateOffscreenPageLimit();
 			}
 		}
 
@@ -190,11 +193,16 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 			base.OnElementPropertyChanged(sender, e);
 
 			if (e.PropertyName == nameof(TabbedPage.CurrentPage))
-				ScrollToCurrentPage();
+			{
+				if (Element.CurrentPage != null)
+					ScrollToCurrentPage();
+			}
 			else if (e.PropertyName == NavigationPage.BarBackgroundColorProperty.PropertyName)
 				UpdateBarBackgroundColor();
 			else if (e.PropertyName == NavigationPage.BarTextColorProperty.PropertyName)
 				UpdateBarTextColor();
+			else if (e.PropertyName == PlatformConfiguration.AndroidSpecific.TabbedPage.IsSwipePagingEnabledProperty.PropertyName)
+				UpdateSwipePaging();
 		}
 
 		protected override void OnLayout(bool changed, int l, int t, int r, int b)
@@ -208,11 +216,14 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 			tabs.Measure(MeasureSpecFactory.MakeMeasureSpec(width, MeasureSpecMode.Exactly), MeasureSpecFactory.MakeMeasureSpec(height, MeasureSpecMode.AtMost));
 			var tabsHeight = 0;
 
-			//MinimumHeight is only available on API 16+
-			if ((int)Build.VERSION.SdkInt >= 16)
-				tabsHeight = Math.Min(height, Math.Max(tabs.MeasuredHeight, tabs.MinimumHeight));
-			else
-				tabsHeight = Math.Min(height, tabs.MeasuredHeight);
+			if (tabs.Visibility != ViewStates.Gone)
+			{
+				//MinimumHeight is only available on API 16+
+				if ((int)Build.VERSION.SdkInt >= 16)
+					tabsHeight = Math.Min(height, Math.Max(tabs.MeasuredHeight, tabs.MinimumHeight));
+				else
+					tabsHeight = Math.Min(height, tabs.MeasuredHeight);
+			}
 
 			pager.Measure(MeasureSpecFactory.MakeMeasureSpec(width, MeasureSpecMode.AtMost), MeasureSpecFactory.MakeMeasureSpec(height, MeasureSpecMode.AtMost));
 
@@ -248,10 +259,14 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 			TabLayout tabs = _tabLayout;
 
 			((FormsFragmentPagerAdapter<Page>)pager.Adapter).CountOverride = Element.Children.Count;
+			
 			pager.Adapter.NotifyDataSetChanged();
 
 			if (Element.Children.Count == 0)
+			{
 				tabs.RemoveAllTabs();
+				tabs.SetupWithViewPager(null);
+			}
 			else
 			{
 				tabs.SetupWithViewPager(pager);
@@ -264,13 +279,25 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 
 		void ScrollToCurrentPage()
 		{
+			((Platform)Element.Platform).NavAnimationInProgress = true;
 			_viewPager.SetCurrentItem(Element.Children.IndexOf(Element.CurrentPage), UseAnimations);
+			((Platform)Element.Platform).NavAnimationInProgress = false;
 		}
 
 		void UpdateIgnoreContainerAreas()
 		{
 			foreach (IPageController child in Element.Children)
 				child.IgnoresContainerArea = child is NavigationPage;
+		}
+
+		void UpdateOffscreenPageLimit()
+		{
+			_viewPager.OffscreenPageLimit = Element.OnThisPlatform().OffscreenPageLimit();
+		}
+
+		void UpdateSwipePaging()
+		{
+			_viewPager.EnableGesture = Element.OnThisPlatform().IsSwipePagingEnabled();
 		}
 
 		void UpdateTabBarTranslation(int position, float offset)

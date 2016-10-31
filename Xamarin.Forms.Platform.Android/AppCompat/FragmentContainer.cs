@@ -1,9 +1,10 @@
 using System;
 using Android.OS;
 using Android.Runtime;
-using Android.Support.V4.App;
 using Android.Views;
+using Xamarin.Forms.PlatformConfiguration.AndroidSpecific.AppCompat;
 using AView = Android.Views.View;
+using Fragment = Android.Support.V4.App.Fragment;
 
 namespace Xamarin.Forms.Platform.Android.AppCompat
 {
@@ -80,22 +81,26 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 		{
 			if (Page != null)
 			{
-				IVisualElementRenderer renderer = _visualElementRenderer;
-				PageContainer container = _pageContainer;
-
-				if (container.Handle != IntPtr.Zero && renderer.ViewGroup.Handle != IntPtr.Zero)
+				if (_visualElementRenderer != null)
 				{
-					container.RemoveFromParent();
-					renderer.ViewGroup.RemoveFromParent();
-					Page.ClearValue(Android.Platform.RendererProperty);
+					if (_visualElementRenderer.ViewGroup.Handle != IntPtr.Zero)
+					{
+						_visualElementRenderer.ViewGroup.RemoveFromParent();
+					}
 
-					container.Dispose();
-					renderer.Dispose();
+					_visualElementRenderer.Dispose();
 				}
+
+				// We do *not* eagerly dispose of the _pageContainer here; doing so  causes a memory leak 
+				// if animated fragment transitions are enabled (it removes some info that the animation's 
+				// onAnimationEnd handler requires to properly clean things up)
+				// Instead, we let the garbage collector pick it up later, when we can be sure it's safe
+
+				Page?.ClearValue(Android.Platform.RendererProperty);
 			}
 
+			_onCreateCallback = null;
 			_visualElementRenderer = null;
-			_pageContainer = null;
 
 			base.OnDestroyView();
 		}
@@ -108,20 +113,34 @@ namespace Xamarin.Forms.Platform.Android.AppCompat
 				return;
 
 			if (hidden)
-				PageController.SendDisappearing();
+				PageController?.SendDisappearing();
 			else
-				PageController.SendAppearing();
+				PageController?.SendAppearing();
 		}
 
 		public override void OnPause()
 		{
-			PageController?.SendDisappearing();
+			var shouldSendEvent = Application.Current.OnThisPlatform().GetSendDisappearingEventOnPause();
+			if (shouldSendEvent)
+			{
+				Page currentPage = (Application.Current.MainPage as IPageContainer<Page>)?.CurrentPage;
+				if (currentPage == null || currentPage == PageController)
+					PageController?.SendDisappearing();
+			}
+
 			base.OnPause();
 		}
-		
+
 		public override void OnResume()
 		{
-			PageController?.SendAppearing();
+			var shouldSendEvent = Application.Current.OnThisPlatform().GetSendAppearingEventOnResume();
+			if (shouldSendEvent)
+			{
+				Page currentPage = (Application.Current.MainPage as IPageContainer<Page>)?.CurrentPage;
+				if (UserVisibleHint && (currentPage == null || currentPage == PageController))
+					PageController?.SendAppearing();
+			}
+
 			base.OnResume();
 		}
 	}

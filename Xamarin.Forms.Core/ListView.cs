@@ -8,7 +8,7 @@ using Xamarin.Forms.Internals;
 namespace Xamarin.Forms
 {
 	[RenderWith(typeof(_ListViewRenderer))]
-	public class ListView : ItemsView<Cell>, IListViewController
+	public class ListView : ItemsView<Cell>, IListViewController, IElementConfiguration<ListView>
 
 	{
 		public static readonly BindableProperty IsPullToRefreshEnabledProperty = BindableProperty.Create("IsPullToRefreshEnabled", typeof(bool), typeof(ListView), false);
@@ -43,6 +43,8 @@ namespace Xamarin.Forms
 
 		public static readonly BindableProperty SeparatorColorProperty = BindableProperty.Create("SeparatorColor", typeof(Color), typeof(ListView), Color.Default);
 
+		readonly Lazy<PlatformConfigurationRegistry<ListView>> _platformConfigurationRegistry;
+
 		BindingBase _groupDisplayBinding;
 
 		BindingBase _groupShortNameBinding;
@@ -64,6 +66,7 @@ namespace Xamarin.Forms
 
 			TemplatedItems.IsGroupingEnabledProperty = IsGroupingEnabledProperty;
 			TemplatedItems.GroupHeaderTemplateProperty = GroupHeaderTemplateProperty;
+			_platformConfigurationRegistry = new Lazy<PlatformConfigurationRegistry<ListView>>(() => new PlatformConfigurationRegistry<ListView>(this));
 		}
 
 		public ListView([Parameter("CachingStrategy")] ListViewCachingStrategy cachingStrategy) : this()
@@ -82,6 +85,25 @@ namespace Xamarin.Forms
 		{
 			get { return (DataTemplate)GetValue(FooterTemplateProperty); }
 			set { SetValue(FooterTemplateProperty, value); }
+		}
+
+		protected override void OnBindingContextChanged()
+		{
+			base.OnBindingContextChanged();
+
+			object bc = BindingContext;
+
+			var header = Header as Element;
+			if (header != null)
+			{
+				SetChildInheritedBindingContext(header, bc);
+			}
+
+			var footer = Footer as Element;
+			if (footer != null)
+			{
+				SetChildInheritedBindingContext(footer, bc);
+			}
 		}
 
 		public BindingBase GroupDisplayBinding
@@ -572,6 +594,11 @@ namespace Xamarin.Forms
 				return true;
 			var template = (DataTemplate)value;
 			return template.CreateContent() is View;
+		}
+
+		public IPlatformElementConfiguration<T, ListView> On<T>() where T : IConfigPlatform
+		{
+			return _platformConfigurationRegistry.Value.On<T>();
 		}
 	}
 }
